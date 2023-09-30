@@ -1,0 +1,197 @@
+---
+title: "RSMS HW 1"
+output: 
+  html_document:
+    code_folding: show
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Задача 3
+
+
+Будем использовать $$\overline{X} = \frac{\sum_{i=1} ^ n X_i}{n}$$ для оценки среднего и $$ s^2 = \frac{1}{n-1} \sum_{i=1} ^ n (X_i - \overline{X})$$ для оценки дисперсии.
+
+```{r class.source = 'fold-hide'}
+get_est = function(sample) {
+  est = c( mean(sample), var(sample))
+  names(est) = c("Mean", "Variance")
+  est
+}
+get.99ci = function(sample) {
+  est_sd = sqrt(est[2])
+  mean_conf_interval_99 = c(est[1] - 3*est_sd, est[1] + 3*est_sd) 
+  names(mean_conf_interval_99) = c("Lower bound", "Upper bound")
+  mean_conf_interval_99
+}
+
+```
+
+```{r}
+set.seed(2023)
+n=5
+mean=1
+sd=2
+sample = rnorm(n, mean = mean, sd=sd)
+est = get_est(sample)
+est
+```
+
+
+```{r}
+get.99ci(sample)
+```
+
+Истинное значение попало в интервал.
+
+
+```{r, class.source = 'fold-hide'}
+sample_from_density = function(n, pdf_f, approx=1000, ...) {
+  x = seq(-10, 10, length.out = approx)
+  y = sapply(x, pdf_f, ...)
+
+  random.points <- approx(
+    cumsum(y)/sum(y),
+    x,
+    runif(n)
+  )$y
+  random.points
+}
+rlongtailed_normal = function(sd=1, mean=0, c) {
+  found
+}
+
+dlongtailed_normal = function(x, c, sd=1, mean=0, normal_range=c(0, 4)) {
+  if (x >= normal_range[1] & x <= normal_range[2]) {
+    return(dnorm(x, mean=mean, sd=sd))
+  } else { 
+    if (x < 0) {
+      return(c * exp(x))
+    } else {
+      return(c * exp(8 - 2*x))
+    }
+  }
+}
+
+integrate = function(fn, x_range=seq(-10, 10, length.out=100), ...) {
+  lambda = abs(abs(x_range[2]) - abs(x_range[1]))
+  res = 0
+  for (x in x_range) {
+    res = res + fn(x, ...) * (lambda)
+  }
+  res
+}
+
+estimate_c = function(sd, mean, tol=0.01) {
+  grid = seq(-100, 100, length.out=10000)
+  
+  for (c in grid) {
+    total_proba = integrate(fn=dlongtailed_normal, sd=sd, mean=mean, c=c)
+    #
+    #for (x in x_range) {
+    #  total_proba = total_proba + dlongtailed_normal(x, sd=sd, mean=mean, c=c) * (1 / length(x_range))
+    #}
+    if (abs(total_proba - 1) < tol) {
+      return(c)
+    }
+  }
+}
+
+c_est = estimate_c(sd=sd, mean=mean)
+c_right_continuous = dnorm(4, mean=mean, sd=sd)
+
+x_range = seq(-10, 10, length.out = 300)
+plot( 
+  x_range, 
+  lapply(x_range, dlongtailed_normal, c=c_est, mean=mean, sd=sd), 
+  type='l',
+  xlab = "x", ylab = "f(x)",
+  sub="Плотность, где c выбран так, чтобы интегрировалось к 1"
+)
+plot(
+  x_range, 
+  lapply(x_range, dlongtailed_normal, c=c_right_continuous, mean=mean, sd=sd),
+  ylab = "f(x)",
+  xlab = "x",
+  xlim = c(-7, 7)
+)
+
+hist(sample_from_density(100, pdf_f = dnorm, mean = 1))
+hist(
+  sample_from_density(
+    1000,
+    dlongtailed_normal, 
+    c=c_est,
+    mean=mean,
+    sd=sd
+  ),
+  xlab = "x", ylab = "empirical density",
+)
+integrate(
+  dnorm, 
+  x_range=seq(0, 4, length.out=1000),     
+  #c=c_est,
+  mean=mean,
+  sd=sd
+)
+integrate(
+  dlongtailed_normal, 
+  x_range=seq(-10, 10, length.out=1000),     
+  mean=mean,
+  sd=sd,
+  c=c_est
+)
+```
+
+```{r}
+longtailed_mean = mean(sample_from_density(
+  100000,
+  dlongtailed_normal, 
+  c=c_est,
+  mean=mean,
+  sd=sd
+))
+```
+
+```{r}
+longtailed_sample = sample_from_density(
+  n,
+  dlongtailed_normal, 
+  c=c_est,
+  mean=mean,
+  sd=sd
+)
+
+```
+
+```{r}
+est = get_est(longtailed_sample)
+est
+```
+
+
+```{r}
+get.99ci(longtailed_sample)
+```
+
+```{r}
+#mean()
+```
+
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+```{r}
+
+```
+
