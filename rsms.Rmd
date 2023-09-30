@@ -129,8 +129,8 @@ estimate_c = function(sd, mean, tol=0.01) {
 #   sd=sd
 # )
 # integrate(
-#   dlongtailed_normal, 
-#   x_range=seq(-10, 10, length.out=1000),     
+#   dlongtailed_normal,
+#   x_range=seq(-10, 10, length.out=1000),
 #   mean=mean,
 #   sd=sd,
 #   c=c_est
@@ -233,21 +233,22 @@ for (n_samples in c(5, 10, 20)) {
 Сравнение эмпирических распределений большой выборки
 
 ```{r, fig.width=12}
-par(mfrow = c(2, 2))
+par(mfrow = c(1, 2))
 
-normal.sample = sample_from_density(
+set.seed(2023)
+longtailed.sample = sample_from_density(
   1000,
   dlongtailed_normal,
   sd=sd, mean=mean, c=c_est
 )
 
-longtailed.sample = sample_from_density(
+normal.sample = sample_from_density(
     1000,
     dnorm,
     mean=mean, sd=sd
   )
-hist(normal.sample)
-hist(longtailed.sample)
+hist(normal.sample, breaks = 50)
+hist(longtailed.sample, breaks = 50)
 ```
 
 
