@@ -1,0 +1,157 @@
+---
+title: "t4"
+output: html_document
+date: '2023-09-30'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+![](./static/t4.png)
+
+$$\delta (x) = 1 \iff  \frac{p_0(x)}{p_1(x)} \le c$$
+
+$$c: \mathbb{P}_0(\delta =1 ) \le \alpha$$
+
+$$
+\begin{aligned}
+\frac{p_0(x)}{p_1(x)} \propto
+
+\frac{
+    \exp( \frac{ (x-\mu_0)^2 }{-2 \sigma_0 ^ 2})
+  }{
+    \exp( \frac{ (x-\mu_1)^2 }{-2 \sigma_1 ^ 2} )
+  }
+\\ \propto
+
+\exp(\frac{ \sigma_1^2 (x-\mu_0)^2 - \sigma_0^2 (x-\mu_1)^2 }{-2 \sigma_0 ^ 2 \sigma_1 ^ 2})
+
+\\ \propto
+
+\exp( \frac {(x - \frac{\sigma_1^2 \mu_0 - \sigma_0 ^ 2 \mu_1}{\sigma_1 ^ 2 - \sigma_0 ^ 2} )^2} {-2(\frac{\sigma_0^2 \sigma_1^2}{\sigma_1^2 - \sigma_0^2})} )
+
+\end{aligned}
+$$
+
+Значит, предполагая $\sigma_1 > \sigma_0 $ (в нашем случае это так) (значит $-2(\frac{\sigma_0^2 \sigma_1^2}{\sigma_1^2 - \sigma_0^2}) < 0$),
+
+$$  
+\delta (x) = 1 \iff  
+  (x - \frac{\sigma_1^2 \mu_0 - \sigma_0 ^ 2 \mu_1}{\sigma_1 ^ 2 - \sigma_0 ^ 2} )^2 \ge c
+$$ 
+
+
+Таким образом, 
+
+$$
+\begin{aligned}
+
+\delta(\mathbf{X}) = 0 \iff 
+\sum_{i=1}^n (x_i - \frac{\sigma_1^2 \mu_0 - \sigma_0 ^ 2 \mu_1}{\sigma_1 ^ 2 - \sigma_0 ^ 2} ) ^ 2 < c 
+
+\end{aligned}
+$$
+
+Порог $c$ проще подобрать численно.
+
+
+```{r,  class.source="fold-hide"}
+
+alpha = 0.75
+sigma_0 = 1
+sigma_1 = sqrt(2)
+mu_0 = 1
+mu_1 = 4
+mu.test = (sigma_1 ** 2 * mu_0 - sigma_0 ** 2 * mu_1) / (sigma_1 ** 2 - sigma_0 ** 2)
+
+test_statistic = function(sample) {
+  sum((sample - mu.test) ** 2) 
+}
+
+bootstrap_statistic = function(statistic, mu_0, sigma_0, n_samples=100) {
+  statistics = c()
+  for (i in 1:1000) {
+    sample = rnorm(n_samples, mean=mu_0, sd=sigma_0)
+    statistics = append(statistics, statistic(sample))
+  }
+  statistics
+}
+
+estimate_c = function(statistics, alpha, mu_0, sigma_0) {
+  for (c in seq(0, 10000, length.out=10000)) {
+    alpha_c = length(statistics[statistics > c]) / length(statistics)
+    if (alpha_c < alpha) {
+      return(c)
+    }
+  }
+}
+
+get_pvalue = function(statistics, value) {
+  length(statistics[statistics > value]) / length(statistics)
+}
+
+
+```
+
+Оценим распределение статистик $\sum_{i=1}^n (x_i - \frac{\sigma_1^2 \mu_0 - \sigma_0 ^ 2 \mu_1}{\sigma_1 ^ 2 - \sigma_0 ^ 2} ) ^ 2$ при нулевой гипотезе при разных $n=3,15,100$ с помощью сэмплирования. Узнаем пороги c для уровня $\alpha=0.75$
+
+```{r}
+set.seed(2023)
+statistics.3 = bootstrap_statistic(test_statistic, mu_0, sigma_0, n_samples = 3)
+statistics.15 = bootstrap_statistic(test_statistic, mu_0, sigma_0, n_samples = 15)
+statistics.100 = bootstrap_statistic(test_statistic, mu_0, sigma_0, n_samples = 100)
+
+c.3 = estimate_c(statistics.3, alpha, mu_0, sigma_0)
+c.15 = estimate_c(statistics.15, alpha, mu_0, sigma_0)
+c.100 = estimate_c(statistics.100, alpha, mu_0, sigma_0)
+
+list(c.3=c.3, c.15=c.15, c.100=c.100)
+```
+
+
+Берем выборку из распределения в нулевой гипотезе размером $n=15$, считаем p-value. Гипотеза не опровергнута
+
+```{r}
+set.seed(2023)
+sample = rnorm(15, mean=mu_0, sd=sigma_0)
+statistic = test_statistic(sample)
+list(
+  reject =  statistic > c.15, 
+  pvalue = get_pvalue(statistics.15, statistic), 
+  c.15=c.15, 
+  observed.statistic=statistic
+)
+```
+
+Берем выборку из распределения в нулевой гипотезе размером $n=100$, считаем p-value. На удивление, гипотеза опровергнута
+
+```{r}
+set.seed(2023)
+sample = rnorm(100, mean=mu_0, sd=sigma_0)
+statistic = test_statistic(sample)
+list(
+  reject =  statistic > c.100, 
+  pvalue = get_pvalue(statistics.100, statistic),
+  c.100=c.100, 
+  observed.statistic=statistic
+)
+```
+
+Берем выборку из равномерного распределения в нулевой гипотезе размером $n=3$, считаем p-value. Гипотеза опровергнута
+
+```{r}
+set.seed(2023)
+sample = runif(3, min=0, max=6)
+statistic = test_statistic(sample)
+list(reject =  statistic > c.3, pvalue = get_pvalue(statistics.3, statistic))
+```
+Берем выборку из равномерного распределения в нулевой гипотезе размером $n=15$, считаем p-value. Гипотеза опровергнута 
+```{r}
+set.seed(2023)
+sample = runif(15, min=0, max=6)
+statistic = test_statistic(sample)
+list(reject =  statistic > c.15, pvalue = get_pvalue(statistics.3, statistic))
+```
+
+Таким образом, статистические решения, полученные из критерия Неймана-Пирсона, могут быть применены и к выборкам, которые совсем непохожи на распределение как из нулевой гипотезы, так и из альтернативы.

@@ -30,6 +30,9 @@ get.99ci = function(sample) {
 
 ```
 
+
+Берем выборку размером 5 с параметрами $\mu=1$ и $\sigma=2$.
+
 ```{r}
 set.seed(2023)
 n=5
@@ -40,6 +43,7 @@ est = get_est(sample)
 est
 ```
 
+Берем $3\sigma$ доверительный интервал
 
 ```{r}
 get.99ci(sample)
@@ -47,6 +51,7 @@ get.99ci(sample)
 
 Истинное значение попало в интервал.
 
+Теперь утяжеляем хвосты экспоненциальным распределением.
 
 ```{r, class.source = 'fold-hide'}
 sample_from_density = function(n, pdf_f, approx=1000, ...) {
@@ -214,6 +219,7 @@ run_samples(
   c=c_est, mean=mean, sd=sd
 )
 ```
+Повторяем операцию 3 раза, с объемами выборок $5, 10, 20$.
 
 ```{r}
 
@@ -221,14 +227,16 @@ set.seed(2023)
 for (n_samples in c(5, 10, 20)) {
   #print(run_samples(n_samples))
   print(run_samples(
-    n_samples=n_samples,
-    sample_size=5, 
+    n_samples=1,
+    sample_size=n_samples, 
     density=dlongtailed_normal, 
     c=c_est, mean=mean, sd=sd
   ))
 }
 
 ```
+Во всех случаях $\mu=1$ попало в интервал даже в выборке из испорченного распределения.
+Можно заметить, что длина доверительного интервала сильно менялась от выборки к выборке; а при увеличении количества наблюдений с 5 до 10, интервал лишь расширился (что случилось из-за того, что в выборке оказались выбросы, $\hat{\sigma}^2=1.67$ против $\hat{\sigma}^2=5.57$).
 
 Сравнение эмпирических распределений большой выборки
 
@@ -252,9 +260,9 @@ hist(longtailed.sample, breaks = 50)
 ```
 
 
-Сравнение эмпирических распределений статистик
 
-```{r, fig.width=12, fig.height=7}
+```{r, fig.width=12, fig.height=7, class.source = 'hide'}
+#Сравнение эмпирических распределений статистик
 par(mfrow = c(2, 2))
 
 set.seed(2023)
@@ -275,10 +283,21 @@ samples = run_samples(
 )
 means = samples$est_matrix[, 1]
 variances = samples$est_matrix[, 2]
-hist(longtailed.means)
-hist(longtailed.variances)
-hist(means)
-hist(variances)
+#hist(longtailed.means)
+#hist(longtailed.variances)
+#hist(means)
+#hist(variances)
 ```
 
-Разницы не видно!
+Наблюдатель, который не знает, что выборка испорчена может получить неэффективные оценками свойств распределения.
+
+Наблюдатель который знает, что выборка испорчена, может использовать робастные оценки.
+
+```{r, fig.width= 12, class.source="hide"}
+library(VGAM)
+par(mfrow=c(1,2))
+#hist(rlaplace(1000))
+#hist(rnorm(1000))
+
+```
+
