@@ -208,6 +208,83 @@ window.buildTabsets = function(tocID) {
 };
 
 </script>
+<script>
+window.initializeCodeFolding = function(show) {
+
+  // handlers for show-all and hide all
+  $("#rmd-show-all-code").click(function() {
+    $('div.r-code-collapse').each(function() {
+      $(this).collapse('show');
+    });
+  });
+  $("#rmd-hide-all-code").click(function() {
+    $('div.r-code-collapse').each(function() {
+      $(this).collapse('hide');
+    });
+  });
+
+  // index for unique code element ids
+  var currentIndex = 1;
+
+  // select all R code blocks
+  var rCodeBlocks = $('pre.r, pre.python, pre.bash, pre.sql, pre.cpp, pre.stan, pre.julia, pre.foldable');
+  rCodeBlocks.each(function() {
+    // skip if the block has fold-none class
+    if ($(this).hasClass('fold-none')) return;
+
+    // create a collapsable div to wrap the code in
+    var div = $('<div class="collapse r-code-collapse"></div>');
+    var showThis = (show || $(this).hasClass('fold-show')) && !$(this).hasClass('fold-hide');
+    var id = 'rcode-643E0F36' + currentIndex++;
+    div.attr('id', id);
+    $(this).before(div);
+    $(this).detach().appendTo(div);
+
+    // add a show code button right above
+    var showCodeText = $('<span>' + (showThis ? 'Hide' : 'Code') + '</span>');
+    var showCodeButton = $('<button type="button" class="btn btn-default btn-xs btn-secondary btn-sm code-folding-btn pull-right float-right"></button>');
+    showCodeButton.append(showCodeText);
+    showCodeButton
+        .attr('data-toggle', 'collapse')
+        .attr('data-bs-toggle', 'collapse') // BS5
+        .attr('data-target', '#' + id)
+        .attr('data-bs-target', '#' + id)   // BS5
+        .attr('aria-expanded', showThis)
+        .attr('aria-controls', id);
+
+    var buttonRow = $('<div class="row"></div>');
+    var buttonCol = $('<div class="col-md-12"></div>');
+
+    buttonCol.append(showCodeButton);
+    buttonRow.append(buttonCol);
+
+    div.before(buttonRow);
+
+    // show the div if necessary
+    if (showThis) div.collapse('show');
+
+    // update state of button on show/hide
+    //   * Change text
+    //   * add a class for intermediate states styling
+    div.on('hide.bs.collapse', function () {
+      showCodeText.text('Code');
+      showCodeButton.addClass('btn-collapsing');
+    });
+    div.on('hidden.bs.collapse', function () {
+      showCodeButton.removeClass('btn-collapsing');
+    });
+    div.on('show.bs.collapse', function () {
+      showCodeText.text('Hide');
+      showCodeButton.addClass('btn-expanding');
+    });
+    div.on('shown.bs.collapse', function () {
+      showCodeButton.removeClass('btn-expanding');
+    });
+
+  });
+
+}
+</script>
 <style type="text/css">.hljs-literal {
 color: #990073;
 }
@@ -344,6 +421,9 @@ pre code {
 </style>
 
 <!-- code folding -->
+<style type="text/css">
+.code-folding-btn { margin-bottom: 4px; }
+</style>
 
 
 
@@ -360,6 +440,14 @@ pre code {
 
 <div id="header">
 
+<div class="btn-group pull-right float-right">
+<button type="button" class="btn btn-default btn-xs btn-secondary btn-sm dropdown-toggle" data-toggle="dropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
+<ul class="dropdown-menu dropdown-menu-right" style="min-width: 50px;">
+<li><a id="rmd-show-all-code" href="#">Show All Code</a></li>
+<li><a id="rmd-hide-all-code" href="#">Hide All Code</a></li>
+</ul>
+</div>
+
 
 
 <h1 class="title toc-ignore">t4</h1>
@@ -373,7 +461,6 @@ pre code {
 \iff  \frac{p_0(x)}{p_1(x)} \le c\]</span></p>
 <p><span class="math display">\[c: \mathbb{P}_0(\delta =1 ) \le
 \alpha\]</span></p>
-$$
 <span class="math display">\[\begin{aligned}
 \frac{p_0(x)}{p_1(x)} \propto
 
@@ -394,9 +481,8 @@ $$
 \sigma_0^2})} )
 
 \end{aligned}\]</span>
-<p>$$</p>
-<p>Значит, предполагая $_1 &gt; _0 $ (в нашем случае это так) (значит
-<span class="math inline">\(-2(\frac{\sigma_0^2 \sigma_1^2}{\sigma_1^2 -
+<p>Значит, предполагая <span class="math display">\[ \sigma_1 &gt;
+\sigma_0 \]</span> (в нашем случае это так) (значит <span class="math inline">\(-2(\frac{\sigma_0^2 \sigma_1^2}{\sigma_1^2 -
 \sigma_0^2}) &lt; 0\)</span>),</p>
 <p><span class="math display">\[  
 \delta (x) = 1 \iff  
@@ -404,7 +490,6 @@ $$
 \sigma_0 ^ 2} )^2 \ge c
 \]</span></p>
 <p>Таким образом,</p>
-$$
 <span class="math display">\[\begin{aligned}
 
 \delta(\mathbf{X}) = 0 \iff
@@ -412,10 +497,9 @@ $$
 \mu_1}{\sigma_1 ^ 2 - \sigma_0 ^ 2} ) ^ 2 &lt; c
 
 \end{aligned}\]</span>
-<p>$$</p>
 <p>Порог <span class="math inline">\(c\)</span> проще подобрать
 численно.</p>
-<pre class="r"><code>alpha = 0.75
+<pre class="r fold-hide"><code>alpha = 0.75
 sigma_0 = 1
 sigma_1 = sqrt(2)
 mu_0 = 1
@@ -447,31 +531,75 @@ estimate_c = function(statistics, alpha, mu_0, sigma_0) {
 get_pvalue = function(statistics, value) {
   length(statistics[statistics &gt; value]) / length(statistics)
 }</code></pre>
-<pre class="r"><code>statistics.3 = bootstrap_statistic(test_statistic, mu_0, sigma_0, n_samples = 3)
+<p>Оценим распределение статистик <span class="math inline">\(\sum_{i=1}^n (x_i - \frac{\sigma_1^2 \mu_0 -
+\sigma_0 ^ 2 \mu_1}{\sigma_1 ^ 2 - \sigma_0 ^ 2} ) ^ 2\)</span> при
+нулевой гипотезе при разных <span class="math inline">\(n=3,15,100\)</span> с помощью сэмплирования.
+Узнаем пороги c для уровня <span class="math inline">\(\alpha=0.75\)</span></p>
+<pre class="r"><code>set.seed(2023)
+statistics.3 = bootstrap_statistic(test_statistic, mu_0, sigma_0, n_samples = 3)
 statistics.15 = bootstrap_statistic(test_statistic, mu_0, sigma_0, n_samples = 15)
 statistics.100 = bootstrap_statistic(test_statistic, mu_0, sigma_0, n_samples = 100)
 
 c.3 = estimate_c(statistics.3, alpha, mu_0, sigma_0)
 c.15 = estimate_c(statistics.15, alpha, mu_0, sigma_0)
-c.100 = estimate_c(statistics.100, alpha, mu_0, sigma_0)</code></pre>
+c.100 = estimate_c(statistics.100, alpha, mu_0, sigma_0)
+
+list(c.3=c.3, c.15=c.15, c.100=c.100)</code></pre>
+<pre><code>## $c.3
+## [1] 22.0022
+## 
+## $c.15
+## [1] 135.0135
+## 
+## $c.100
+## [1] 960.096</code></pre>
+<p>Берем выборку из распределения в нулевой гипотезе размером <span class="math inline">\(n=15\)</span>, считаем p-value. Гипотеза не
+опровергнута</p>
 <pre class="r"><code>set.seed(2023)
 sample = rnorm(15, mean=mu_0, sd=sigma_0)
 statistic = test_statistic(sample)
-list(reject =  statistic &gt; c.15, pvalue = get_pvalue(statistics.15, statistic))</code></pre>
+list(
+  reject =  statistic &gt; c.15, 
+  pvalue = get_pvalue(statistics.15, statistic), 
+  c.15=c.15, 
+  observed.statistic=statistic
+)</code></pre>
 <pre><code>## $reject
 ## [1] FALSE
 ## 
 ## $pvalue
-## [1] 0.827</code></pre>
+## [1] 0.836
+## 
+## $c.15
+## [1] 135.0135
+## 
+## $observed.statistic
+## [1] 127.2479</code></pre>
+<p>Берем выборку из распределения в нулевой гипотезе размером <span class="math inline">\(n=100\)</span>, считаем p-value. На удивление,
+гипотеза опровергнута</p>
 <pre class="r"><code>set.seed(2023)
 sample = rnorm(100, mean=mu_0, sd=sigma_0)
 statistic = test_statistic(sample)
-list(reject =  statistic &gt; c.100, pvalue = get_pvalue(statistics.100, statistic))</code></pre>
+list(
+  reject =  statistic &gt; c.100, 
+  pvalue = get_pvalue(statistics.100, statistic),
+  c.100=c.100, 
+  observed.statistic=statistic
+)</code></pre>
 <pre><code>## $reject
 ## [1] TRUE
 ## 
 ## $pvalue
-## [1] 0.252</code></pre>
+## [1] 0.281
+## 
+## $c.100
+## [1] 960.096
+## 
+## $observed.statistic
+## [1] 1038.588</code></pre>
+<p>Берем выборку из равномерного распределения в нулевой гипотезе
+размером <span class="math inline">\(n=3\)</span>, считаем p-value.
+Гипотеза опровергнута</p>
 <pre class="r"><code>set.seed(2023)
 sample = runif(3, min=0, max=6)
 statistic = test_statistic(sample)
@@ -480,7 +608,10 @@ list(reject =  statistic &gt; c.3, pvalue = get_pvalue(statistics.3, statistic))
 ## [1] TRUE
 ## 
 ## $pvalue
-## [1] 0.079</code></pre>
+## [1] 0.061</code></pre>
+<p>Берем выборку из равномерного распределения в нулевой гипотезе
+размером <span class="math inline">\(n=15\)</span>, считаем p-value.
+Гипотеза опровергнута</p>
 <pre class="r"><code>set.seed(2023)
 sample = runif(15, min=0, max=6)
 statistic = test_statistic(sample)
@@ -490,6 +621,10 @@ list(reject =  statistic &gt; c.15, pvalue = get_pvalue(statistics.3, statistic)
 ## 
 ## $pvalue
 ## [1] 0</code></pre>
+<p>Таким образом, статистические решения, полученные из критерия
+Неймана-Пирсона, могут быть применены и к выборкам, которые совсем
+непохожи на распределение как из нулевой гипотезы, так и из
+альтернативы.</p>
 
 
 
@@ -524,6 +659,11 @@ $(document).ready(function () {
 </script>
 
 <!-- code folding -->
+<script>
+$(document).ready(function () {
+  window.initializeCodeFolding("show" === "show");
+});
+</script>
 
 
 <!-- dynamically load mathjax for compatibility with self-contained -->
