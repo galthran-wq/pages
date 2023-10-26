@@ -312,7 +312,9 @@ for (sample_size in c(5, 10, 20, 30)) {
 
 legend(x="topleft", legend=c("n=5", "n=10", "n=20", "n=30"), fill=colors)
 ```
+
 Сравнение распределений длин доверительного интервала для испорченного распределения при разных $n$.
+
 ```{r,  class.source = 'fold-hide'}
 set.seed(2023)
 f_range = seq(-5, 5, length.out=50)
@@ -340,6 +342,15 @@ for (sample_size in c(5, 10, 20, 30)) {
 }
 
 legend(x="topleft", legend=c("n=5", "n=10", "n=20", "n=30"), fill=colors)
+```
+
+```{r, class.source="hide"}
+# set.seed(2023)
+# sample = rnorm(100)
+# print(get.99ci(sample[seq(1,15)]))
+# print(get.99ci(sample[seq(1,20)]))
+# get.99ci(sample[seq(1,30)])
+# get.99ci(sample[seq(1,100)])
 ```
 
 
