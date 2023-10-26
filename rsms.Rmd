@@ -312,6 +312,35 @@ for (sample_size in c(5, 10, 20, 30)) {
 
 legend(x="topleft", legend=c("n=5", "n=10", "n=20", "n=30"), fill=colors)
 ```
+Сравнение распределений длин доверительного интервала для испорченного распределения при разных $n$.
+```{r,  class.source = 'fold-hide'}
+set.seed(2023)
+f_range = seq(-5, 5, length.out=50)
+
+colors = c("blue", "red", "green", "pink", "orange")
+col_i = 1
+
+for (sample_size in c(5, 10, 20, 30)) {
+  #print(run_samples(n_samples))
+  ci = run_samples(
+    n_samples=300,
+    sample_size=sample_size,
+    density=dlongtailed_normal,
+    c=c_est, mean=mean, sd=sd
+  )
+  length = ci$ci_matrix[, 2] - ci$ci_matrix[, 1]
+
+  if (col_i == 1) {
+    plot(density(length), col=colors[col_i])
+  } else {
+    lines(density(length), col=colors[col_i])
+  }
+  col_i = col_i + 1
+  
+}
+
+legend(x="topleft", legend=c("n=5", "n=10", "n=20", "n=30"), fill=colors)
+```
 
 
 ```{r, class.source="hide"}
