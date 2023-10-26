@@ -17,31 +17,40 @@ $$\delta (x) = 1 \iff  \frac{p_0(x)}{p_1(x)} \le c$$
 $$c: \mathbb{P}_0(\delta =1 ) \le \alpha$$
 
 
+
 \begin{aligned}
 \frac{p_0(x)}{p_1(x)} \propto
 
 \frac{
-    \exp( \frac{ (x-\mu_0)^2 }{-2 \sigma_0 ^ 2})
+    \sigma_1 \exp( \frac{ (x-\mu_0)^2 }{-2 \sigma_0 ^ 2})
   }{
-    \exp( \frac{ (x-\mu_1)^2 }{-2 \sigma_1 ^ 2} )
+    \sigma_0 \exp( \frac{ (x-\mu_1)^2 }{-2 \sigma_1 ^ 2} )
   }
 \\ \propto
 
-\exp(\frac{ \sigma_1^2 (x-\mu_0)^2 - \sigma_0^2 (x-\mu_1)^2 }{-2 \sigma_0 ^ 2 \sigma_1 ^ 2})
+\frac{\sigma_1}{\sigma_0} \exp(\frac{ \sigma_1^2 (x-\mu_0)^2 - \sigma_0^2 (x-\mu_1)^2 }{-2 \sigma_0 ^ 2 \sigma_1 ^ 2})
 
 \\ \propto
 
-\exp( \frac {(x - \frac{\sigma_1^2 \mu_0 - \sigma_0 ^ 2 \mu_1}{\sigma_1 ^ 2 - \sigma_0 ^ 2} )^2} {-2(\frac{\sigma_0^2 \sigma_1^2}{\sigma_1^2 - \sigma_0^2})} )
+\frac{\sigma_1}{\sigma_0} \exp( \frac {(x - \frac{\sigma_1^2 \mu_0 - \sigma_0 ^ 2 \mu_1}{\sigma_1 ^ 2 - \sigma_0 ^ 2} )^2} {-2(\frac{\sigma_0^2 \sigma_1^2}{\sigma_1^2 - \sigma_0^2})} )
 
 \end{aligned}
 
 
+
 Значит, предполагая $$ \sigma_1 > \sigma_0 $$ (в нашем случае это так) (значит $-2(\frac{\sigma_0^2 \sigma_1^2}{\sigma_1^2 - \sigma_0^2}) < 0$),
 
-$$  
-\delta (x) = 1 \iff  
-  (x - \frac{\sigma_1^2 \mu_0 - \sigma_0 ^ 2 \mu_1}{\sigma_1 ^ 2 - \sigma_0 ^ 2} )^2 \ge c
-$$ 
+
+
+\begin{aligned}
+\delta (x) = 1 \iff  \\
+
+\log\frac{\sigma_1}{\sigma_0} + \frac {(x - \frac{\sigma_1^2 \mu_0 - \sigma_0 ^ 2 \mu_1}{\sigma_1 ^ 2 - \sigma_0 ^ 2} )^2} {-2(\frac{\sigma_0^2 \sigma_1^2}{\sigma_1^2 - \sigma_0^2})} \le c \iff \\
+
+  (x - \frac{\sigma_1^2 \mu_0 - \sigma_0 ^ 2 \mu_1}{\sigma_1 ^ 2 - \sigma_0 ^ 2} )^2 \ge -2(\frac{\sigma_0^2 \sigma_1^2}{\sigma_1^2 - \sigma_0^2})(c - \log\frac{\sigma_1}{\sigma_0})  \iff \\
+  (x - \frac{\sigma_1^2 \mu_0 - \sigma_0 ^ 2 \mu_1}{\sigma_1 ^ 2 - \sigma_0 ^ 2} )^2 \ge c'
+\end{aligned}
+
 
 
 Таким образом, 
@@ -49,13 +58,20 @@ $$
 
 \begin{aligned}
 
-\delta(\mathbf{X}) = 0 \iff 
-\sum_{i=1}^n (x_i - \frac{\sigma_1^2 \mu_0 - \sigma_0 ^ 2 \mu_1}{\sigma_1 ^ 2 - \sigma_0 ^ 2} ) ^ 2 < c 
+\delta(\mathbf{X}) = 0 \iff \\
+ \sum{\log\frac{p_0(x_i)}{p_1(x_i)}} \le c \iff \\
+ 
+ \sum( \log\frac{\sigma_1}{\sigma_0} + \frac {(x_i - \frac{\sigma_1^2 \mu_0 - \sigma_0 ^ 2 \mu_1}{\sigma_1 ^ 2 - \sigma_0 ^ 2} )^2} {-2(\frac{\sigma_0^2 \sigma_1^2}{\sigma_1^2 - \sigma_0^2})}) \le c \iff \\
+ 
+N\log\frac{\sigma_1}{\sigma_0} + \frac {\sum (x_i - \frac{\sigma_1^2 \mu_0 - \sigma_0 ^ 2 \mu_1}{\sigma_1 ^ 2 - \sigma_0 ^ 2} )^2} {-2(\frac{\sigma_0^2 \sigma_1^2}{\sigma_1^2 - \sigma_0^2})}) \le c \iff \\
+ 
+\sum_{i=1}^n (x_i - \frac{\sigma_1^2 \mu_0 - \sigma_0 ^ 2 \mu_1}{\sigma_1 ^ 2 - \sigma_0 ^ 2} ) ^ 2 \ge c' 
 
 \end{aligned}
 
+$c'$ зависит от $\sigma_0$ и $\sigma_1$, но в данном случае (проверки простой гипотезы) это не важно
 
-Порог $c$ проще подобрать численно.
+Порог $c'$ проще подобрать численно.
 
 
 ```{r,  class.source="fold-hide"}

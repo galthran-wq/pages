@@ -22,7 +22,7 @@ get_est = function(sample) {
 }
 get.99ci = function(sample) {
   est = get_est(sample)
-  est_sd = sqrt(est[2])
+  est_sd = sqrt(est[2] / length(sample))
   mean_conf_interval_99 = c(est[1] - 3*est_sd, est[1] + 3*est_sd) 
   names(mean_conf_interval_99) = c("Lower bound", "Upper bound")
   mean_conf_interval_99
@@ -219,24 +219,120 @@ run_samples(
   c=c_est, mean=mean, sd=sd
 )
 ```
+
+
+
+
+
+```{r, class.source="hide"}
+# set.seed(2023)
+# for (n_samples in c(5, 10, 20, 30, 40, 50, 100)) {
+#   #print(run_samples(n_samples))
+#   print(paste("Результаты для n=", n_samples))
+#   run_samples(
+#     n_samples=100,
+#     sample_size=n_samples, 
+#     density=dlongtailed_normal, 
+#     c=c_est, mean=mean, sd=sd
+#   )$ci_matrix
+#   
+# }
+```
+
 Повторяем операцию 3 раза, с объемами выборок $5, 10, 20$.
+Во всех случаях $\mu=1$ попало в интервал даже в выборке из испорченного распределения.
 
-```{r}
+При переходе от $n=5$ к $n=10$, а также от $n=20$ к $n=30$ интервалы оказались невложенными, а длинна увеличилась
 
+```{r, class.source = 'fold-hide'}
 set.seed(2023)
-for (n_samples in c(5, 10, 20)) {
+for (n_samples in c(5, 10, 20, 30, 40, 50, 100)) {
   #print(run_samples(n_samples))
-  print(run_samples(
+  print(paste("Результаты для n=", n_samples))
+  res = (run_samples(
     n_samples=1,
+    sample_size=n_samples, 
+    density=dnorm, 
+    mean=mean, sd=sd
+  ))
+  res$ci_length = res$ci_matrix[2] - res$ci_matrix[1]
+  print(res)
+}
+```
+
+В математическом ожидании интервалы сужаются. Вот что будет, если брать усредненный доверительный интервал для тех же самых размеров выборки:
+
+```{r,  class.source = 'fold-hide'}
+set.seed(2023)
+for (n_samples in c(5, 10, 20, 30, 40, 50, 100)) {
+  #print(run_samples(n_samples))
+  print(paste("Результаты для n=", n_samples))
+  ci_matrix = run_samples(
+    n_samples=100,
     sample_size=n_samples, 
     density=dlongtailed_normal, 
     c=c_est, mean=mean, sd=sd
-  ))
+  )$ci_matrix
+  lower.bound = mean(ci_matrix[, 1])
+  upper.bound = mean(ci_matrix[, 2])
+  ci_length = upper.bound - lower.bound
+  
+  res = c(lower.bound, upper.bound, ci_length) 
+  names(res) = c("lower.bound", "upper.bound", "ci.length")
+  print(res)
+}
+```
+
+Сравнение распределений левой границы доверительного интервала для испорченного распределения при разных $n$.
+
+```{r,  class.source = 'fold-hide'}
+set.seed(2023)
+f_range = seq(-5, 5, length.out=50)
+
+colors = c("blue", "red", "green", "pink", "orange")
+col_i = 1
+
+for (sample_size in c(5, 10, 20, 30)) {
+  #print(run_samples(n_samples))
+  lower_ci = run_samples(
+    n_samples=300,
+    sample_size=sample_size,
+    density=dlongtailed_normal,
+    c=c_est, mean=mean, sd=sd
+  )$ci_matrix[, 1]
+
+  if (col_i == 1) {
+    plot(density(lower_ci), col=colors[col_i])
+  } else {
+    lines(density(lower_ci), col=colors[col_i])
+  }
+  col_i = col_i + 1
+  
 }
 
+legend(x="topleft", legend=c("n=5", "n=10", "n=20", "n=30"), fill=colors)
 ```
-Во всех случаях $\mu=1$ попало в интервал даже в выборке из испорченного распределения.
-Можно заметить, что длина доверительного интервала сильно менялась от выборки к выборке; а при увеличении количества наблюдений с 5 до 10, интервал лишь расширился (что случилось из-за того, что в выборке оказались выбросы, $\hat{\sigma}^2=1.67$ против $\hat{\sigma}^2=5.57$).
+
+
+```{r, class.source="hide"}
+# С ростом количества наблюдений интервал в среднем сужается
+# data = data.frame(matrix(ncol=3, nrow=0))
+# colnames(data) = c("sample_size", "ci", "mean")
+data = data.frame(sample_size=c(0), ci=c(0), mean=c(0))
+# rbind(data, c(1,1,1))
+for (sample_size in c(5, 10, 20, 30, 50, 100)) {
+  ci_matrix = run_samples(
+    n_samples=300,
+    sample_size=sample_size,
+    density=dnorm, 
+    mean=mean, sd=sd
+  )$ci_matrix
+  interval_lengths = ci_matrix[, 2] - ci_matrix[, 1]
+  interval_means = (ci_matrix[, 2] + ci_matrix[, 1]) / 2
+  # da
+}
+```
+
 
 Сравнение эмпирических распределений большой выборки
 
@@ -289,7 +385,7 @@ variances = samples$est_matrix[, 2]
 #hist(variances)
 ```
 
-Наблюдатель, который не знает, что выборка испорчена может получить неэффективные оценками свойств распределения.
+Наблюдатель, который не знает, что выборка испорчена может получить неэффективные оценки свойств распределения.
 
 Наблюдатель который знает, что выборка испорчена, может использовать робастные оценки.
 
