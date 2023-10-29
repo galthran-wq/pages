@@ -260,7 +260,19 @@ for (n_samples in c(5, 10, 20, 30, 40, 50, 100)) {
 }
 ```
 
-В математическом ожидании интервалы сужаются. Вот что будет, если брать усредненный доверительный интервал для тех же самых размеров выборки:
+```{r}
+
+```
+
+
+В математическом ожидании интервалы сужаются, то есть $E[ 6\hat{\sigma_{\overline{X}}} ] (\text{длина 3-сигма интервала}) \xrightarrow[n \xrightarrow{} \infty]{} 0$. Вот что будет, если брать усредненный доверительный интервал для тех же самых размеров выборки:
+
+1. Для каждого $n=5,10,20,30$
+2. Берем 100 выборок размера $n$
+3. Для каждой выборки строим доверительный 3-сигма интервал
+4. Усредняем полученные 100 левых и правых границ интервалов соответственно.
+
+Таким образом получается оценка математического ожидания левой ($\text{lower.bound}$) и правой границ ($\text{upper.bound}$) интервала, и, как можно видеть, интервалы получаются вложенными, а длина интервалов ($\text{ci.length}$) действительно уменьшается.
 
 ```{r,  class.source = 'fold-hide'}
 set.seed(2023)
@@ -343,6 +355,102 @@ for (sample_size in c(5, 10, 20, 30)) {
 
 legend(x="topleft", legend=c("n=5", "n=10", "n=20", "n=30"), fill=colors)
 ```
+
+Колебания длины интервала при маленьких выборках обусловлены высокой дисперсией оценки (которая стремится к нулю при $n \xrightarrow{} \infty$). Тем не менее, так мы брали доверительный интервал 3-$\sigma$, $\mu=1$ попадает интервал в среднем в 99% случаев -- вне зависимости от размера выборки.
+
+```{r, class.source="hide"}
+# sample_size = 100
+# c = 0
+# samples = run_samples(
+#     n_samples=1000,
+#     sample_size=sample_size,
+#     density=dnorm,
+#     mean=mean, sd=sd
+# )$ci_matrix
+# 
+# 
+# for (i in 1:1000) {
+#   if ((samples[i,][2] > 1) && (samples[i][1] < 1)) {
+#     c = c + 1
+#   }
+# }
+# c
+```
+
+Повторим операцию для размеров выборки $n=2,..,100$ и выведем все случаи, когда $\mu=1$ не попало в доверительный интервал.
+
+```{r}
+set.seed(2023)
+times = c()
+
+for (sample_size in seq(2, 100)) {
+  #print(run_samples(n_samples))
+  ci = run_samples(
+    n_samples=1,
+    sample_size=sample_size,
+    density=dlongtailed_normal,
+    c=c_est, mean=mean, sd=sd
+  )$ci_matrix
+  if ((ci[1, 2] > 1) && (ci[1, 1] < 1)) {
+  } else {
+    times = append(times, sample_size)
+  }
+}
+```
+
+Оценим мат ожидание попадания $\mu=1$ в интервал при разных $n$. С увелечением размера выборки для испорченного распределения, растет вероятность непопадания $\mu=1$ в доверительный интервал
+
+```{r, class.source="fold-hide"}
+set.seed(2023)
+probas = c()
+
+for (sample_size in seq(2, 100)) {
+  #print(run_samples(n_samples))
+  ci = run_samples(
+    n_samples=100,
+    sample_size=sample_size,
+    density=dlongtailed_normal,
+    c=c_est, mean=mean, sd=sd
+  )$ci_matrix
+  times_for_sample_size = 0
+  for (i in seq(1, 100)) {
+    if ((ci[i, 2] > 1) && (ci[i, 1] < 1)) {
+    } else {
+      times_for_sample_size = times_for_sample_size + 1
+    }
+  }
+  probas = append(probas, times_for_sample_size / 100)
+}
+
+probas_normal = c()
+
+for (sample_size in seq(2, 100)) {
+  #print(run_samples(n_samples))
+  ci = run_samples(
+    n_samples=100,
+    sample_size=sample_size,
+    density=dnorm,
+    mean=mean, sd=sd
+  )$ci_matrix
+  times_for_sample_size = 0
+  for (i in seq(1, 100)) {
+    if ((ci[i, 2] > 1) && (ci[i, 1] < 1)) {
+    } else {
+      times_for_sample_size = times_for_sample_size + 1
+    }
+  }
+  probas_normal = append(probas_normal, times_for_sample_size / 100)
+}
+```
+
+```{r}
+plot(seq(2,100), probas, type='l', sub = "Оценка вероятность попадания mu=1 в 3-сигма доверительный интервал", xlab="n")
+lines(seq(2,100), probas_normal, type='l', col="blue")
+
+legend(1, 95, legend=c("Испореченное распределение", "Нормальное распределение"),
+       col=c("red", "blue"), lty=1:2, cex=0.8)
+```
+
 
 ```{r, class.source="hide"}
 # set.seed(2023)
