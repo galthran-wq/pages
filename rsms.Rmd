@@ -168,14 +168,19 @@ plot(
 Настоящее среднее такого распределения.
 
 ```{r}
-longtailed_mean = mean(sample_from_density(
+sample = sample_from_density(
   100000,
-  dlongtailed_normal, 
+  dlongtailed_normal,
   c=c_est,
   mean=mean,
   sd=sd
-))
-longtailed_mean
+)
+c(mean(sample), var(sample), median(sample))
+```
+
+```{r}
+qqnorm(sample, pch = 1, frame = FALSE)
+qqline(sample, col = "steelblue", lwd = 2)
 ```
 
 ```{r, class.source = 'fold-hide'}
@@ -454,6 +459,87 @@ legend(1, 95, legend=c("Испореченное распределение", "�
        col=c("red", "blue"), lty=1:2, cex=0.8)
 ```
 
+```{r, class.source="hide"}
+normal_cis_upper = c()
+normal_cis_lower = c()
+abnormal_cis_upper = c()
+abnormal_cis_lower = c()
+for (sample_size in seq(2, 100)) {
+  #print(run_samples(n_samples))
+  ci = run_samples(
+    n_samples=100,
+    sample_size=sample_size,
+    density=dnorm,
+    mean=mean, sd=sd
+  )$ci_matrix
+  abnormal_ci = run_samples(
+    n_samples=100,
+    sample_size=sample_size,
+    density=dlongtailed_normal,
+    c=c_est, mean=mean, sd=sd
+  )$ci_matrix
+  normal_cis_upper = append(normal_cis_upper, mean(ci[,2]))
+  normal_cis_lower = append(normal_cis_lower, mean(ci[,1]))
+  abnormal_cis_upper = append(abnormal_cis_upper, mean(abnormal_ci[,2]))
+  abnormal_cis_lower = append(abnormal_cis_lower, mean(abnormal_ci[,1]))
+}
+
+```
+
+```{r}
+plot(seq(2, 100), normal_cis_lower, col="red", type='l', ylim=c(-5,5), xlab="n", sub="Доверительные интервалы", ylab="значение среднего")
+lines(seq(2, 100), normal_cis_upper, col="red")
+lines(seq(2, 100), abnormal_cis_upper, col="blue")
+lines(seq(2, 100), abnormal_cis_lower, col="blue")
+legend(6, 5, legend=c("нормальное распределение", "испорченное распределение"),
+       fill=c("red", "blue"))
+```
+
+При каком $n$ можно обнаружить, что выборка испорчена?
+
+Для разных значений $n$, оценим p-value для Shapiro-Wilk теста на нормальность.
+
+```{r, class.source="hide"}
+# shapiro.test(rnorm(100, mean=0, sd=100))
+```
+
+```{r, class.source="fold-hide"}
+set.seed(2023)
+normal_pvalues = c()
+abnormal_pvalues = c()
+for (sample_size in seq(5, 100)) {
+  normal_pvalues_for_sample_size = c()
+  abnormal_pvalues_for_sample_size = c()
+  for (i in seq(1:100)) {
+    long_sample = sample_from_density(
+      sample_size,
+      dlongtailed_normal,
+      c=c_est,
+      mean=mean,
+      sd=sd
+    )
+    sample = sample_from_density(
+      sample_size,
+      dnorm,
+      mean=mean,
+      sd=sd
+    )
+    normal_pvalues_for_sample_size = append(normal_pvalues_for_sample_size, shapiro.test(sample)$p.value)
+    abnormal_pvalues_for_sample_size = append(abnormal_pvalues_for_sample_size, shapiro.test(long_sample)$p.value)
+  }
+  normal_pvalues = append(normal_pvalues, mean(normal_pvalues_for_sample_size))
+  abnormal_pvalues = append(abnormal_pvalues, mean(abnormal_pvalues_for_sample_size))
+}
+```
+
+```{r}
+plot(seq(5, 100), abnormal_pvalues, col="blue", type='l', ylim=c(0,1), xlab="n", sub="shapiro-Wilk pvalues", ylab="p-value")
+lines(seq(5, 100), normal_pvalues, col="red")
+# lines(seq(2, 100), abnormal_cis_upper, col="blue")
+# lines(seq(2, 100), abnormal_cis_lower, col="blue")
+legend(1, 1, legend=c("нормальное распределение", "испорченное распределение"),
+       fill=c("red", "blue"))
+```
 
 ```{r, class.source="hide"}
 # set.seed(2023)
@@ -469,19 +555,19 @@ legend(1, 95, legend=c("Испореченное распределение", "�
 # С ростом количества наблюдений интервал в среднем сужается
 # data = data.frame(matrix(ncol=3, nrow=0))
 # colnames(data) = c("sample_size", "ci", "mean")
-data = data.frame(sample_size=c(0), ci=c(0), mean=c(0))
-# rbind(data, c(1,1,1))
-for (sample_size in c(5, 10, 20, 30, 50, 100)) {
-  ci_matrix = run_samples(
-    n_samples=300,
-    sample_size=sample_size,
-    density=dnorm, 
-    mean=mean, sd=sd
-  )$ci_matrix
-  interval_lengths = ci_matrix[, 2] - ci_matrix[, 1]
-  interval_means = (ci_matrix[, 2] + ci_matrix[, 1]) / 2
-  # da
-}
+# data = data.frame(sample_size=c(0), ci=c(0), mean=c(0))
+# # rbind(data, c(1,1,1))
+# for (sample_size in c(5, 10, 20, 30, 50, 100)) {
+#   ci_matrix = run_samples(
+#     n_samples=300,
+#     sample_size=sample_size,
+#     density=dnorm, 
+#     mean=mean, sd=sd
+#   )$ci_matrix
+#   interval_lengths = ci_matrix[, 2] - ci_matrix[, 1]
+#   interval_means = (ci_matrix[, 2] + ci_matrix[, 1]) / 2
+#   # da
+# }
 ```
 
 
@@ -548,3 +634,13 @@ par(mfrow=c(1,2))
 
 ```
 
+```{r, fig.width= 12, class.source="hide"}
+# library(lawstat)
+# symmetry.test(
+#   sample_from_density(
+#     1000,
+#     pdf_f=dlongtailed_normal,
+#     sd=sd,mean=mean,c=c_est
+#   )
+# )
+```
