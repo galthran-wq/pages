@@ -1,6 +1,8 @@
 ---
-title: "shinystan"
-output: html_document
+title: "HW2 задача 3"
+output: 
+  html_document:
+    code_folding: show
 date: '2023-10-09'
 ---
 
@@ -8,7 +10,7 @@ date: '2023-10-09'
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r}
+```{r, class.source="hide"}
 sample_from_density = function(n, pdf_f, approx=1000, ...) {
   x = seq(-10, 10, length.out = approx)
   y = sapply(x, pdf_f, ...)
@@ -62,6 +64,7 @@ estimate_c = function(sd, mean, tol=0.01) {
 ```
 
 ```{r}
+x_range = seq(-10, 10, length.out = 300)
 mean=1
 sd=2
 c_est = estimate_c(sd=sd, mean=mean)
@@ -102,8 +105,8 @@ ogawa = function(sample, discard_n=2) {
 #ogawa(c(1,2,6,8,9), discard_n = 1)
 ```
 ```{r}
-set.seed(42)
-sample_from_density(10, dlongtailed_normal,  c=c_est, mean=mean, sd=sd)
+#set.seed(42)
+#sample_from_density(10, dlongtailed_normal,  c=c_est, mean=mean, sd=sd)
 ```
 
 ```{r}
@@ -140,7 +143,7 @@ bootstrap_risk = function(n_samples, estimator, risk_f, n_iter=100) {
   }
   risk_f(estimates, mean)
 }
-bootstrap_risk(5, estimator=mean_estimator, risk_f=r_1)
+#bootstrap_risk(5, estimator=mean_estimator, risk_f=r_1)
 ```
 ```{r}
 ```
