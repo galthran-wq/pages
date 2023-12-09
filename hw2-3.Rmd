@@ -148,7 +148,9 @@ bootstrap_risk = function(n_samples, estimator, risk_f, n_iter=100) {
 ```{r}
 ```
 
-```{r}
+Посчитаем риски для всех видов оценок, для разных размеров выборок:
+
+```{r,  class.source="hide"}
 set.seed(42)
 all_n_samples = c(5, 10, 20, 40)
 mean_mse = c()
