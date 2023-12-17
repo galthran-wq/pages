@@ -1,0 +1,81 @@
+---
+title: "hw22"
+output: html_document
+date: "2023-12-17"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Обозначения
+
+Гипотеза $H_1$: при наступлении $A$ -- $f_1 \sim \exp(0.5)$; при наступлении $\overline{A}$ -- $f_2 \sim \chi(4)$.
+Гипотеза $H_2$: при наступлении $A$ -- $f_3 \sim \exp(1)$; при наступлении $\overline{A}$ -- $f_2 \sim \chi(1)$.
+
+Пусть $g_1=P(A)*f_1 + P(\overline{A}) * f_2$
+Пусть $g_2=P(A)*f_3 + P(\overline{A}) * f_4$
+
+Эти плотности соответсвуют плотностям распределения наблюдений в условиях, когда неизвестен исход $A$ при первой и второй гипотезе соответственно.
+
+
+```{r cars}
+library(chi)
+f1 = function(x) {
+  dexp(x, rate=0.5)
+}
+
+f2 = function(x) {
+  if (x < 0){
+    0
+  } else{
+    dchi(x, 4, ncp = 0, log = FALSE)
+  }
+}
+f3 = function(x) {
+  dexp(x, rate=1)
+}
+f4 = function(x) {
+  if (x < 0){
+    0 + 1e-5
+  } else{
+    dchi(x, 1, ncp = 0, log = FALSE)
+  }
+}
+g1 = function(x) {
+  0.5 * f1(x) + 0.5 * f2(x)
+}
+g2 = function(x) {
+  0.5 * f3(x) + 0.5 * f4(x)
+}
+```
+
+Посчитаем $I(f_1, f_3)$ $I(f_2, f_4)$, $I(g_1, g_2)$ приближенно:
+```{r}
+lower = 0.01
+upper = 10
+K = upper - lower
+N = 10000
+range = seq(lower, upper, length.out=N)
+
+I_1_3 = 0
+I_2_4 = 0
+I_1_2 = 0
+for (x in range) {
+  I_1_3 = I_1_3 + K/N * f1(x) * log(f1(x) / f3(x))
+  I_2_4 = I_2_4 + K/N * f2(x) * log(f2(x) / f4(x))
+  I_1_2 = I_1_2 + K/N * g1(x) * log(g1(x) / g2(x))
+}
+
+c(I_1_3, I_2_4, I_1_2)
+```
+Если знаем, когда случилось $A$:
+
+$I(H_1, H_2) = P(A) * I(f_1, f_3) + P(\overline{A}) * I(f_2, f_4) = 0.5 * 0.2743489 + 0.5 * 1.2064208 = 0.74038485$
+
+Если не знаем, когда случилось $A$:
+
+$I(H_1, H_2) = I(g_1, g_2) = 0.5239472$
+
+Вывод: значние информации о наступлении события $A$ значительно повышает информативность наблюдений.
+
