@@ -395,7 +395,7 @@ g1 = function(x) {
 g2 = function(x) {
   0.5 * f3(x) + 0.5 * f4(x)
 }</code></pre>
-<p>Посчитаем <span class="math inline">\(I(f_1, f_3)\)</span> <span class="math inline">\(I(f_2, f_4)\)</span>, <span class="math inline">\(I(g_1, g_2)\)</span> приближенно:</p>
+<p>Посчитаем <span class="math inline">\(I(f_1, f_3)\)</span> <span class="math inline">\(I(f_3, f_1)\)</span> <span class="math inline">\(I(f_2, f_4)\)</span>, <span class="math inline">\(I(f_4, f_2)\)</span>, <span class="math inline">\(I(g_1, g_2)\)</span>, <span class="math inline">\(I(g_2, g_1)\)</span> приближенно:</p>
 <pre class="r"><code>lower = 0.01
 upper = 10
 K = upper - lower
@@ -403,24 +403,36 @@ N = 10000
 range = seq(lower, upper, length.out=N)
 
 I_1_3 = 0
+I_3_1 = 0
 I_2_4 = 0
+I_4_2 = 0
 I_1_2 = 0
+I_2_1 = 0
 for (x in range) {
   I_1_3 = I_1_3 + K/N * f1(x) * log(f1(x) / f3(x))
+  I_3_1 = I_3_1 + K/N * f3(x) * log(f3(x) / f1(x))
   I_2_4 = I_2_4 + K/N * f2(x) * log(f2(x) / f4(x))
+  I_4_2 = I_4_2 + K/N * f4(x) * log(f4(x) / f2(x))
   I_1_2 = I_1_2 + K/N * g1(x) * log(g1(x) / g2(x))
+  I_2_1 = I_2_1 + K/N * g2(x) * log(g2(x) / g1(x))
 }
 
-c(I_1_3, I_2_4, I_1_2)</code></pre>
-<pre><code>## [1] 0.2743489 1.2064208 0.5239472</code></pre>
+c(I_1_3, I_3_1, I_2_4, I_4_2, I_1_2, I_2_1)</code></pre>
+<pre><code>## [1] 0.2743489 0.1868150 1.2064208 2.2404933 0.5239472 0.4689436</code></pre>
 <p>Если знаем, когда случилось <span class="math inline">\(A\)</span>:</p>
 <p><span class="math inline">\(I(H_1, H_2) = P(A) * I(f_1, f_3) +
 P(\overline{A}) * I(f_2, f_4) = 0.5 * 0.2743489 + 0.5 * 1.2064208 =
-0.74038485\)</span></p>
+0.74038485\)</span> <span class="math inline">\(I(H_2, H_1) = P(A) *
+I(f_3, f_1) + P(\overline{A}) * I(f_4, f_2) = 0.5 * 0.1868150 + 0.5 *
+2.2404933 = 1.21365415\)</span></p>
 <p>Если не знаем, когда случилось <span class="math inline">\(A\)</span>:</p>
 <p><span class="math inline">\(I(H_1, H_2) = I(g_1, g_2) =
-0.5239472\)</span></p>
-<p>Вывод: значние информации о наступлении события <span class="math inline">\(A\)</span> значительно повышает информативность
+0.5239472\)</span> <span class="math inline">\(I(H_2, H_1) = I(g_2, g_1)
+= 0.4689436\)</span></p>
+<p>Расстояние Кульбака-Лейбреа между гипотезами в условиях, когда
+известно наступление события <span class="math inline">\(A\)</span>
+больше, чем когда не известно, вне зависимости от порядка гипотез.
+Следовательно, знание информации о наступлении события <span class="math inline">\(A\)</span> повышает информативность
 наблюдений.</p>
 </div>
 
