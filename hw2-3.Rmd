@@ -218,7 +218,7 @@ legend(20, -0.6, legend=c("Среднее арифметическое", "Пир
 
 ```
 ```{r}
-plot(all_n_samples, mean_r3, type='l', col='red', main="риск 2")
+plot(all_n_samples, mean_r3, type='l', col='red', main="риск 3")
 lines(all_n_samples, pt_r3, col='blue')
 lines(all_n_samples, ogawa_r3, col='green')
 legend(20, -0.6, legend=c("Среднее арифметическое", "Пирсон-Тьюки", "Огава"),
@@ -247,13 +247,17 @@ legend(20, -0.6, legend=c("Среднее арифметическое", "Пир
 
 - (3) риск тоже уменьшается с увеличением размера выборки для всех оценок
 
+### Вывод: среднее арифметическое лучше всего оценивает $\mu=2$ (среднее неиспорченного распределения (которое было нормальным))
+
 Оценим скорость убывания
 
 ```{r}
 get_decrease_speed = function (mean_mse, all_n_samples) {
   mean_mse = abs(mean_mse)
-  step_speed = mean((log(mean_mse) - lm(y~x+1, data=data.frame(y=log(mean_mse), x=log(all_n_samples)))$residuals)**2)
-  exp_speed = mean((log(mean_mse) - lm(y~x+1, data=data.frame(y=log(mean_mse), x=all_n_samples))$residuals)**2)
+  # step_speed = mean((log(mean_mse) - lm(y~x+1, data=data.frame(y=log(mean_mse), x=log(all_n_samples)))$residuals)**2)
+  # exp_speed = mean((log(mean_mse) - lm(y~x+1, data=data.frame(y=log(mean_mse), x=all_n_samples))$residuals)**2)
+  step_speed = mean(lm(y~x+1, data=data.frame(y=log(mean_mse), x=log(all_n_samples)))$residuals**2)
+  exp_speed = mean(lm(y~x+1, data=data.frame(y=log(mean_mse), x=all_n_samples))$residuals**2)
   print(paste("Ошибка степенная ", round(step_speed, 3)))
   print(paste("Ошибка экспоненциального роста ", round(exp_speed, 3)))
   if (step_speed < exp_speed) {
@@ -283,3 +287,4 @@ for (i in seq_along(mylist)) {
 
 ```
 
+Вывод: везде степенной рост
